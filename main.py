@@ -2,8 +2,6 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 import csv
 import os
-# from csv_operations import read_csv, write_csv
-# from crud_operations import add_record, delete_record, update_record, read_all_records
 import re
 
 # CSV file setup
@@ -24,7 +22,9 @@ def add_record():
     if not category or not amount or not date:
         messagebox.showerror("Input Error", "All fields are required!")
         return
-    if not amount.isdigit():
+    try:
+        amount = float(amount)  # Allow decimal numbers
+    except ValueError:
         messagebox.showerror("Input Error", "Amount must be a number!")
         return
     if not category.isalpha():
@@ -37,7 +37,7 @@ def add_record():
 
     with open(CSV_FILE, mode="a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([category, amount, date])
+        writer.writerow([category, f"{amount:.2f}", date])
         if messagebox.askyesno('Submit Value', 'Do you confirm you want to submit values?'):
             messagebox.showinfo('Yes', 'Record added successfully!')
         else:
@@ -46,6 +46,50 @@ def add_record():
     entry_amount.delete(0, tk.END)
     entry_date.delete(0, tk.END)
     refresh_table()
+
+
+def update_record():
+    selected = table.selection()
+    if not selected:
+        messagebox.showerror("Error", "No record selected!")
+        return
+
+    category = entry_category.get()
+    amount = entry_amount.get()
+    date = entry_date.get()
+
+    if not category or not amount or not date:
+        messagebox.showerror("Input Error", "All fields are required!")
+        return
+
+    try:
+        amount = float(amount)
+    except ValueError:
+        messagebox.showerror("Input Error", "Amount must be a valid number!")
+        return
+
+    date_pattern = r"^\d{4}-\d{2}-\d{2}$"
+    if not re.match(date_pattern, date):
+        messagebox.showerror("Input Error", "Date must be in YYYY-MM-DD format!")
+        return
+
+    if messagebox.askyesno("Update Record", "Are you sure you want to update this record?"):
+        for item in selected:
+            table.item(item, values=(category, f"{amount:.2f}", date))
+        with open(CSV_FILE, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["Category", "Amount", "Date"])
+            for row in table.get_children():
+                values = table.item(row)["values"]
+                writer.writerow(values)
+        messagebox.showinfo("Record Updated", "Record updated successfully!")
+    else:
+        messagebox.showinfo("Update Cancelled", "Update operation cancelled!")
+
+    entry_category.delete(0, tk.END)
+    entry_amount.delete(0, tk.END)
+    entry_date.delete(0, tk.END)
+
 
 def delete_record():
     selected = table.selection()
@@ -81,6 +125,12 @@ main_window = tk.Tk()
 main_window.title("Personal Finance Tracker")
 main_window.geometry("1000x600")
 
+# Use a themed style
+style = ttk.Style()
+style.theme_use("clam")
+style.configure("Treeview.Heading", font=("Arial", 11, "bold"))
+style.configure("Treeview", rowheight=25)
+
 # Top Frame for title or header
 top_frame = tk.Frame(main_window, bg="lightblue", height=50)
 top_frame.pack(fill=tk.X)
@@ -100,11 +150,11 @@ left_frame = tk.Frame(main_window, bg="white")
 left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
 # Right Frame for Inputs and Buttons
-right_frame = tk.Frame(main_window, bg="white")
+right_frame = tk.Frame(main_window, bg="white",padx=10, pady=10)
 right_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=10, pady=10)
 
 # Header for the Right Frame
-right_frame_header = tk.Label(right_frame, text="Add Record Here", font=("Arial", 14, "bold"), bg="black")
+right_frame_header = tk.Label(right_frame, text="Add Record Here", font=("Arial", 14, "bold"))
 right_frame_header.grid(row=0, column=0, columnspan=2, pady=10)
 
 # Table (Left Frame)
@@ -118,27 +168,27 @@ table.column("Date", anchor=tk.CENTER, width=150)
 table.pack(fill=tk.BOTH, expand=True)
 
 # Input Fields (Right Frame)
-tk.Label(right_frame, text="Category (e.g., Food, Rent):", bg="black").grid(row=1, column=0, sticky="w", pady=5, padx=5)
-entry_category = tk.Entry(right_frame, width=15)
+tk.Label(right_frame, text="Category (e.g., Food, Rent):").grid(row=1, column=0, sticky="w", pady=5, padx=5)
+entry_category = tk.Entry(right_frame, width=15, bg="whitesmoke")
 entry_category.grid(row=1, column=1, pady=5)
 
-tk.Label(right_frame, text="Amount (e.g., 100):", bg="black").grid(row=2, column=0, sticky="w", pady=5, padx=5)
-entry_amount = tk.Entry(right_frame, width=15)
+tk.Label(right_frame, text="Amount (e.g., 100):").grid(row=2, column=0, sticky="w", pady=5, padx=5)
+entry_amount = tk.Entry(right_frame, width=15, bg="whitesmoke")
 entry_amount.grid(row=2, column=1, pady=5)
 
-tk.Label(right_frame, text="Date (YYYY-MM-DD):", bg="black").grid(row=3, column=0, sticky="w", pady=5, padx=5)
-entry_date = tk.Entry(right_frame, width=15)
+tk.Label(right_frame, text="Date (YYYY-MM-DD):").grid(row=3, column=0, sticky="w", pady=5, padx=5)
+entry_date = tk.Entry(right_frame, width=15, bg="whitesmoke")
 entry_date.grid(row=3, column=1, pady=5)
 
 # Buttons
 btn_add = tk.Button(right_frame, text="Add Record", command=add_record, width=15, bg="lightblue", font=("Arial", 10, "bold"))
 btn_add.grid(row=4, column=0, columnspan=2, pady=10)
 
-btn_add = tk.Button(right_frame, text="Delete Record", command=delete_record, width=15, bg="lightblue", font=("Arial", 10, "bold"))
-btn_add.grid(row=5, column=0, columnspan=2, pady=10)
+btn_delete = tk.Button(right_frame, text="Delete Record", command=delete_record, width=15, bg="lightblue", font=("Arial", 10, "bold"))
+btn_delete.grid(row=5, column=0, columnspan=2, pady=10)
 
-btn_add = tk.Button(right_frame, text="Update Record", command=add_record, width=15, bg="lightblue", font=("Arial", 10, "bold"))
-btn_add.grid(row=6, column=0, columnspan=2, pady=10)
+btn_update = tk.Button(right_frame, text="Update Record", command=update_record, width=15, bg="lightblue", font=("Arial", 10, "bold"))
+btn_update.grid(row=6, column=0, columnspan=2, pady=10)
 
 # Initialize Table with Data
 refresh_table()
