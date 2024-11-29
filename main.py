@@ -1,20 +1,22 @@
+# Various packages imported to create the application
 import tkinter as tk
 from tkinter import messagebox, ttk
 import csv
 import os
 import re
 
-# CSV file setup
 CSV_FILE = "FinanceData.csv"
 
 if not os.path.exists(CSV_FILE):
     with open(CSV_FILE, mode="w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(["Category", "Amount", "Date"])  # Header row
+        writer.writerow(["Category", "Amount", "Date"])
 
-
-# Functions
+# CRUD functions
 def add_record():
+    '''
+    This function adds a record to the CSV file and refreshes the table to display the new record.
+    '''
     category = entry_category.get()
     amount = entry_amount.get()
     date = entry_date.get()
@@ -23,7 +25,7 @@ def add_record():
         messagebox.showerror("Input Error", "All fields are required!")
         return
     try:
-        amount = float(amount)  # Allow decimal numbers
+        amount = float(amount)
     except ValueError:
         messagebox.showerror("Input Error", "Amount must be a number!")
         return
@@ -49,6 +51,9 @@ def add_record():
 
 
 def update_record():
+    '''
+    This function updates a record in the CSV file and refreshes the table to display the updated record.
+    '''
     selected = table.selection()
     if not selected:
         messagebox.showerror("Error", "No record selected!")
@@ -92,6 +97,9 @@ def update_record():
 
 
 def delete_record():
+    '''
+    This function deletes a record from the CSV file and refreshes the table to show the changes.
+    '''
     selected = table.selection()
     if not selected:
         messagebox.showerror("Error", "No record selected!")
@@ -111,53 +119,55 @@ def delete_record():
 
 
 def refresh_table():
+    '''
+    This function refreshes the table to show the records from the CSV file.
+    '''
     for row in table.get_children():
         table.delete(row)
     with open(CSV_FILE, mode="r") as file:
         reader = csv.reader(file)
-        next(reader)  # Skip header
+        next(reader)
         for i, record in enumerate(reader):
             table.insert("", "end", values=(record[0], record[1], record[2]))
 
 
-# Main Application Window
+# Application window that contains all widgets and UI
 main_window = tk.Tk()
 main_window.title("Personal Finance Tracker")
 main_window.geometry("1000x600")
 
-# Use a themed style
 style = ttk.Style()
 style.theme_use("clam")
 style.configure("Treeview.Heading", font=("Arial", 11, "bold"))
 style.configure("Treeview", rowheight=25)
 
-# Top Frame for title or header
+# Header frame to show the title of the application
 top_frame = tk.Frame(main_window, bg="lightblue", height=50)
 top_frame.pack(fill=tk.X)
 
 header_label = tk.Label(top_frame, text="Coin Compass", font=("Aileron", 20, "bold"), bg="lightblue")
 header_label.pack(pady=10)
 
-# Second Top Frame
+# Second highest frame to show makers of the product
 secondtop_frame = tk.Frame(main_window, bg="lightgray", height=30)
 secondtop_frame.pack(fill=tk.X)
 
 footer_label = tk.Label(secondtop_frame, text="Finance Tracker Application - Developed by VNRW", bg="lightgray", fg="black")
 footer_label.pack(pady=5)
 
-# Left Frame for Table
+# Left Frame for table of records
 left_frame = tk.Frame(main_window, bg="white")
 left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-# Right Frame for Inputs and Buttons
+# Right frame for performing CRUD operations on the records
 right_frame = tk.Frame(main_window, bg="white",padx=10, pady=10)
 right_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=10, pady=10)
 
-# Header for the Right Frame
+# Header for the right frame
 right_frame_header = tk.Label(right_frame, text="Add Record Here", font=("Arial", 14, "bold"))
 right_frame_header.grid(row=0, column=0, columnspan=2, pady=10)
 
-# Table (Left Frame)
+# Table of records on the left frame
 table = ttk.Treeview(left_frame, columns=("Category", "Amount", "Date"), show="headings", height=20)
 table.heading("Category", text="Category")
 table.heading("Amount", text="Amount")
@@ -167,7 +177,7 @@ table.column("Amount", anchor=tk.CENTER, width=100)
 table.column("Date", anchor=tk.CENTER, width=150)
 table.pack(fill=tk.BOTH, expand=True)
 
-# Input Fields (Right Frame)
+# Various input fields for creation of records on the right frame
 tk.Label(right_frame, text="Category (e.g., Food, Rent):").grid(row=1, column=0, sticky="w", pady=5, padx=5)
 entry_category = tk.Entry(right_frame, width=15, bg="whitesmoke")
 entry_category.grid(row=1, column=1, pady=5)
@@ -180,7 +190,7 @@ tk.Label(right_frame, text="Date (YYYY-MM-DD):").grid(row=3, column=0, sticky="w
 entry_date = tk.Entry(right_frame, width=15, bg="whitesmoke")
 entry_date.grid(row=3, column=1, pady=5)
 
-# Buttons
+# Various CRUD-based buttons on the right frame
 btn_add = tk.Button(right_frame, text="Add Record", command=add_record, width=15, bg="lightblue", font=("Arial", 10, "bold"))
 btn_add.grid(row=4, column=0, columnspan=2, pady=10)
 
@@ -190,8 +200,6 @@ btn_delete.grid(row=5, column=0, columnspan=2, pady=10)
 btn_update = tk.Button(right_frame, text="Update Record", command=update_record, width=15, bg="lightblue", font=("Arial", 10, "bold"))
 btn_update.grid(row=6, column=0, columnspan=2, pady=10)
 
-# Initialize Table with Data
 refresh_table()
 
-# Run the Application
 main_window.mainloop()
